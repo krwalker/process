@@ -49,13 +49,6 @@ inline boost::process::v1::filesystem::path search_path(
     std::transform(extensions_in.begin(), extensions_in.end(), it_ex,
                 [](const std::wstring & ws){return boost::to_upper_copy(ws, ::boost::process::v1::detail::process_locale());});
 
-
-    std::copy(std::make_move_iterator(extensions_in.begin()), std::make_move_iterator(extensions_in.end()), extensions.begin() + 1);
-
-
-    for (auto & ext : extensions)
-        boost::to_lower(ext);
-
     for (const boost::process::v1::filesystem::path & pp_ : path)
     {
         auto p = pp_ / filename;
