@@ -68,11 +68,22 @@ inline boost::process::v1::filesystem::path search_path(
 #else
             boost::system::error_code ec;
 #endif
-            bool file = boost::process::v1::filesystem::is_regular_file(pp_ext, ec);
-            if (!ec && file &&
-                ::boost::winapi::sh_get_file_info(pp_ext.native().c_str(), 0, 0, 0, ::boost::winapi::SHGFI_EXETYPE_))
-            {
-                return pp_ext;
+            namespace fs = boost::process::v1::filesystem;
+            const fs::file_status status = symlink_status(pp_ext, ec);
+            if (!ec) {
+                switch (status.type()) {
+                    // C:\Windows\system32\cmd.exe 
+                    case fs::file_type::regular_file: 
+                        if ( ::boost::winapi::sh_get_file_info(pp_ext.native().c_str(), 0, 0, 0, ::boost::winapi::SHGFI_EXETYPE_) ) {
+                          return pp_ext;
+                        }
+                        break;
+                    // IO_REPARSE_TAG_APPEXECLINK;
+                    // C:\Users\username\AppData\Local\Microsoft\WindowsApps\python.exe
+                    case fs::file_type::reparse_file:
+                        // There isn't an API that can tell us if this is executable. Assume it is:
+                        return pp_ext;
+                }
             }
         }
     }
